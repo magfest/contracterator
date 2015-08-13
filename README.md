@@ -1,6 +1,8 @@
 # The Contracterator
 Mail-merge-like behavior for generating contracts and other docs from google docs templates and spreadsheets. Useful when you need to generate a ton of similar google docs from a template. 
 
+Use with https://script.google.com/
+
 # HOW IT WORKS
 
 You create a google spreadsheet with the following stuff in it:
