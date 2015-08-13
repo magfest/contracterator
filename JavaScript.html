@@ -1,0 +1,133 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script>
+    // IMPORTANT: Replace the value for DEVELOPER_KEY with the API key obtained
+    // from the Google Developers Console.
+    var DEVELOPER_KEY = 'AIzaSyCt34ovugZkhQ11R3lKJiKm_uS0Ov3T-8E';
+    var DIALOG_DIMENSIONS = {width: 600, height: 425};
+    var pickerApiLoaded = false;
+
+    /**
+     * Loads the Google Picker API.
+     */
+    function onApiLoad() {
+      gapi.load('picker', {'callback': function() {
+        pickerApiLoaded = true;
+      }});
+     }
+
+    /**
+     * Creates a Picker that can access the user's spreadsheets. This function
+     * uses advanced options to hide the Picker's left navigation panel and
+     * default title bar.
+     *
+     * @param {string} token An OAuth 2.0 access token that lets Picker access the
+     *     file type specified in the addView call.
+     */
+    function createPicker(token, button) {
+    
+      if (button.id == "spreadsheet") {
+        view = google.picker.ViewId.SPREADSHEETS;
+      } else {
+        view = google.picker.ViewId.DOCUMENTS;
+      }
+    
+      if (pickerApiLoaded && token) {
+        var picker = new google.picker.PickerBuilder()
+            // Instruct Picker to display only spreadsheets in Drive. For other
+            // views, see https://developers.google.com/picker/docs/#otherviews
+            .addView(view)
+            // Hide the navigation panel so that Picker fills more of the dialog.
+            .enableFeature(google.picker.Feature.NAV_HIDDEN)
+            // Hide the title bar since an Apps Script dialog already has a title.
+            .hideTitleBar()
+            .setOAuthToken(token)
+            .setDeveloperKey(DEVELOPER_KEY)
+            .setCallback(pickerCallback(button))
+            .setTitle(button.id)
+            .setOrigin('https://script.google.com')
+            // Instruct Picker to fill the dialog, minus 2 pixels for the border.
+            .setSize(DIALOG_DIMENSIONS.width - 2,
+                DIALOG_DIMENSIONS.height - 2)
+            .build();
+        picker.setVisible(true);
+      } else {
+        showError('Unable to load the file picker.');
+      }
+    }
+    
+    var documents = {};
+    
+    /**
+     * A callback function that extracts the chosen document's metadata from the
+     * response object. For details on the response object, see
+     * https://developers.google.com/picker/docs/result
+     *
+     * @param {object} data The response object.
+     */
+    var pickerCallback = function(button) {
+      return function pickerCallback2(data) {
+        var action = data[google.picker.Response.ACTION];
+        if (action == google.picker.Action.PICKED) {
+          var doc = data[google.picker.Response.DOCUMENTS][0];
+          var id = doc[google.picker.Document.ID];
+          var url = doc[google.picker.Document.URL];
+          var title = doc[google.picker.Document.NAME];
+          document.getElementById('result_' + button.id).innerHTML =
+              '<b>You chose:</b><br>Name: <a href="' + url + '">' + title +
+              '</a><br/>';
+              documents[button.id] = doc[google.picker.Document.ID];
+        } else if (action == google.picker.Action.CANCEL) {
+          document.getElementById('result_doc').innerHTML = 'Picker canceled.';
+        }
+        updateUI();
+      };
+    };
+    
+    function updateUI() {
+       var submit_disabled = true;
+       if (documents["spreadsheet"] != null && documents["doc"] != null) {
+         submit_disabled = false;
+       }
+       $("#submit").prop("disabled",submit_disabled);
+    }
+    
+    /**
+     * Displays an error message within the #result element.
+     *
+     * @param {string} message The error message to display.
+     */
+    function showError(message) {
+      document.getElementById('results').innerHTML = '<font color="red">Error: ' + message + "</font>";
+      updateUI();
+    }
+    
+    function showAPIError(error) {
+      showError(error.message);
+    }
+    
+    function documentsGeneratedSuccesfully(message) {
+      document.getElementById('results').innerHTML = '<font color=green>SUCCESS! Documents generated. (check your google drive)</font>';
+      updateUI();
+    }
+    
+$( document ).ready(function() {
+    $(".btn_picker").click(function(e) {
+        google.script.run
+          .withSuccessHandler(createPicker)
+          .withFailureHandler(showError)
+          .withUserObject(e.target)
+          .getOAuthToken();
+    });
+    
+    $("#submit").click(function(e) {
+        $("#submit").prop("disabled",true);
+        document.getElementById('results').innerHTML = "processing... please wait. <img src='https://c4a54d10381f750e81dcc323aed21e2c95725815.googledrive.com/host/0Bwyqwd2fAHMMallsNkNOV0RfcTg/wait_progress.gif' />";
+        google.script.run
+           .withSuccessHandler(documentsGeneratedSuccesfully)
+           .withFailureHandler(showError)
+           .generateAllContracts(documents["spreadsheet"], documents["doc"]);
+    });
+});
+
+</script>
+<script src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
