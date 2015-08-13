@@ -7,17 +7,30 @@ Use with https://script.google.com/
 
 You create a google spreadsheet with the following stuff in it:
 
+
+
 A sheet called 'settings' which has some general settings about how to name the generated docs and where to put them:
 ![settings](http://i.imgur.com/WW4Rn2x.png)
+
+
 
 A sheet called 'data' which has the actual data you want to use
 ![data](http://i.imgur.com/OwDRVDz.png)
 
+
+
 A template which has the variable names to be substituted.  For instance ```:PerformerName:``` in this example will be substituted with that column from the spreadsheet.
 ![template](http://i.imgur.com/XpqdFmp.png)
 
+
+
 After you run the script, here's the final result!
 ![final result](http://i.imgur.com/Tex37Kn.png)
+
+
+
+That's just one of the docs, and it'll generate them all in a folder for you:
+![docs in folder](http://i.imgur.com/2JmSfrb.png)
 
 Based off of:
 https://github.com/inviqa/SysAdmin/tree/master/goddamn
