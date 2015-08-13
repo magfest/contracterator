@@ -1,11 +1,3 @@
-// home: https://github.com/magfest/contracterator/
-
-// the spreadsheet where we read the data FROM
-var SOURCE_DATA_SHEET_ID = "";
-
-// the google doc we read in and substitute :variables: from
-var SOURCE_DOCUMENT_TEMPLATE = "";
-
 function getRowAsArray(sheet, row) {
   var dataRange = sheet.getRange(row, 1, 1, 99);
   var data = dataRange.getValues();
@@ -159,8 +151,8 @@ function createDocumentFromTemplate(source_template_id, variables, config) {
   substituteVariableStrings(target, variables);
 }
 
-function generateAllContracts() {
-  var source_data_sheet = SpreadsheetApp.openById(SOURCE_DATA_SHEET_ID);
+function generateAllContracts(source_data_sheet_id, source_document_template) {
+  var source_data_sheet = SpreadsheetApp.openById(source_data_sheet_id);
     
   // TODO: use the sheet name instead of relying on the index for getSheets()
   var data = readVariablesFromSpreadsheet(source_data_sheet.getSheets()["0"]);
@@ -171,6 +163,34 @@ function generateAllContracts() {
    
   // data.forEach(function (document_variables) {
   for (document_variables in data) {
-    createDocumentFromTemplate(SOURCE_DOCUMENT_TEMPLATE, data[document_variables], config);
+    createDocumentFromTemplate(source_document_template, data[document_variables], config);
   }
+}
+
+// main entrypoint
+function doGet(request) {
+  return HtmlService.createTemplateFromFile('main')
+      .evaluate()
+      .setSandboxMode(HtmlService.SandboxMode.IFRAME);
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename)
+      .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+      .getContent();
+}
+
+/**
+ * Gets the user's OAuth 2.0 access token so that it can be passed to Picker.
+ * This technique keeps Picker from needing to show its own authorization
+ * dialog, but is only possible if the OAuth scope that Picker needs is
+ * available in Apps Script. In this case, the function includes an unused call
+ * to a DriveApp method to ensure that Apps Script requests access to all files
+ * in the user's Drive.
+ *
+ * @return {string} The user's OAuth 2.0 access token.
+ */
+function getOAuthToken() {
+  DriveApp.getRootFolder();
+  return ScriptApp.getOAuthToken();
 }
